@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Market Sessions Panel</title>
+    <style>
+        /* --- FUENTES DE NUESTRA MARCA --- */
+        @import url('https://fonts.googleapis.com/css2?family=Lora:wght@500&family=Roboto+Mono:wght@300&display=swap');
+
+        /* --- ESTILO GENERAL --- */
+        body {
+            background-color: transparent;
+            color: #F1F1F1; /* Blanco Hueso */
+            font-family: 'Roboto Mono', monospace; /* Fuente para los relojes */
+            margin: 0;
+            padding: 20px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        /* --- LA CUADRÍCULA PRINCIPAL (GRID) --- */
+        .main-container {
+            display: grid;
+            width: 100%;
+            /* Define 3 columnas para la primera fila, 2 para la segunda */
+            grid-template-columns: repeat(3, 1fr);
+            gap: 40px 20px; /* Espacio vertical y horizontal */
+            justify-items: center;
+        }
+
+        /* --- CONTENEDOR DE CADA RELOJ INDIVIDUAL --- */
+        .clock-container {
+            text-align: center;
+        }
+        
+        /* Posicionamiento especial para la segunda fila */
+        .clock-container.spain {
+            grid-column: 1 / 2; /* Ocupa la primera columna en la segunda fila */
+        }
+         .clock-container.mexico {
+            grid-column: 2 / 3; /* Ocupa la segunda columna */
+        }
+        /* Este truco deja el espacio central de la segunda fila vacío si solo tienes 2 relojes */
+        /* Si tuvieras 3, simplemente elimina esta parte y el grid se ajustará */
+        .main-container > .mexico {
+            grid-column-start: 2;
+        }
+        .main-container > .spain {
+            grid-column-start: 1;
+            /* Si solo tienes dos, podrías querer centrarlos. Por ahora los dejamos alineados a la izquierda */
+        }
+        /* Para un layout de 3 arriba y 2 abajo, centramos la segunda fila */
+        .main-container > .spain, .main-container > .mexico {
+            grid-row: 2;
+        }
+        .main-container > .spain { grid-column: 1; justify-self: end; padding-right: 20%;} /* Mueve España a la derecha de su celda */
+        .main-container > .mexico { grid-column: 2; justify-self: start; padding-left: 20%;} /* Mueve México a la izquierda de su celda */
+
+
+        /* --- ESTILO DE LOS TÍTULOS (ESTÁNDAR OBSIDIANA) --- */
+        .clock-container h2 {
+            font-family: 'Lora', serif; /* Nuestra fuente de Prestigio */
+            font-weight: 500;
+            font-size: 1.1em;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #AA8A5A; /* Nuestro Oro Cepillado */
+            margin-bottom: 25px; /* Espacio entre título y reloj */
+        }
+
+        /* --- ESTILO DEL RELOJ DIGITAL --- */
+        .time {
+            font-size: 2em;
+            font-weight: 300;
+        }
+        .date {
+            font-size: 0.9em;
+            opacity: 0.7;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        <!-- Fila Superior -->
+        <div class="clock-container tokio">
+            <h2>Tokio</h2>
+            <div id="tokio-time" class="time"></div>
+            <div id="tokio-date" class="date"></div>
+        </div>
+        <div class="clock-container london">
+            <h2>London</h2>
+            <div id="london-time" class="time"></div>
+            <div id="london-date" class="date"></div>
+        </div>
+        <div class="clock-container new-york">
+            <h2>New York</h2>
+            <div id="ny-time" class="time"></div>
+            <div id="ny-date" class="date"></div>
+        </div>
+
+        <!-- Fila Inferior -->
+        <div class="clock-container spain">
+            <h2>España</h2>
+            <div id="spain-time" class="time"></div>
+            <div id="spain-date" class="date"></div>
+        </div>
+        <div class="clock-container mexico">
+            <h2>México</h2>
+            <div id="mexico-time" class="time"></div>
+            <div id="mexico-date" class="date"></div>
+        </div>
+    </div>
+
+    <script>
+        function updateClock(timeElementId, dateElementId, timezone) {
+            const now = new Date(new Date().toLocaleString('en-US', { timeZone: timezone }));
+            
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            
+            const day = now.toLocaleDateString('en-US', { weekday: 'short' });
+            const month = now.toLocaleDateString('en-US', { month: 'short' });
+            const dayNum = now.getDate();
+
+            document.getElementById(timeElementId).textContent = `${hours}:${minutes}:${seconds}`;
+            document.getElementById(dateElementId).textContent = `${day}, ${month} ${dayNum}`;
+        }
+
+        function initializeClocks() {
+            updateClock('tokio-time', 'tokio-date', 'Asia/Tokyo');
+            updateClock('london-time', 'london-date', 'Europe/London');
+            updateClock('ny-time', 'ny-date', 'America/New_York');
+            updateClock('spain-time', 'spain-date', 'Europe/Madrid');
+            updateClock('mexico-time', 'mexico-date', 'America/Mexico_City');
+        }
+
+        setInterval(initializeClocks, 1000);
+        initializeClocks(); // Llama una vez al inicio para evitar el retraso de 1 segundo
+    </script>
+
+</body>
+</html>
