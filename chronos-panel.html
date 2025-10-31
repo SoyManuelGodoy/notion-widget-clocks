@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chronos Panel</title>
+    <style>
+        /* --- FUENTES DE NUESTRA MARCA (Añadimos Orbitron) --- */
+        @import url('https://fonts.googleapis.com/css2?family=Lora:wght@500&family=Orbitron:wght@500&display=swap');
+
+        /* --- ESTILO GENERAL --- */
+        body {
+            background-color: transparent;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        /* --- EL CHASIS PRINCIPAL DEL PANEL --- */
+        .chronos-panel {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            width: 100%;
+            max-width: 1200px; /* Limita el ancho para mantener proporciones */
+            padding: 20px;
+            background-color: #0A0A0A; /* Un negro ligeramente menos profundo que el fondo */
+            border: 1px solid #222; /* Borde sutil para definir el hardware */
+            border-radius: 8px; /* Bordes suavemente redondeados */
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5); /* Sombra para darle profundidad */
+        }
+
+        /* --- CADA MÓDULO DE RELOJ INDIVIDUAL --- */
+        .clock-module {
+            text-align: center;
+            flex-grow: 1; /* Permite que cada módulo ocupe el espacio disponible */
+            padding: 0 20px;
+        }
+
+        /* --- ESTILO DEL NOMBRE DE LA UBICACIÓN --- */
+        .location-name {
+            font-family: 'Lora', serif; /* Nuestra fuente de Prestigio */
+            font-size: 1.2em;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: #F1F1F1; /* Blanco Hueso para máxima legibilidad */
+            opacity: 0.8;
+            margin-bottom: 15px;
+        }
+
+        /* --- ESTILO DE LA HORA DIGITAL ILUMINADA --- */
+        .digital-time {
+            font-family: 'Orbitron', sans-serif; /* La nueva fuente digital */
+            font-size: 3.5em; /* Grande e imponente */
+            color: #AA8A5A; /* Nuestro Oro Cepillado */
+            /* El efecto de brillo LED */
+            text-shadow: 0 0 5px rgba(170, 138, 90, 0.7), 
+                         0 0 10px rgba(170, 138, 90, 0.5);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="chronos-panel">
+        <div class="clock-module">
+            <div class="location-name">Tokio</div>
+            <div id="tokio-time" class="digital-time"></div>
+        </div>
+        <div class="clock-module">
+            <div class="location-name">London</div>
+            <div id="london-time" class="digital-time"></div>
+        </div>
+        <div class="clock-module">
+            <div class="location-name">New York</div>
+            <div id="ny-time" class="digital-time"></div>
+        </div>
+    </div>
+
+    <script>
+        function updateClock(timeElementId, timezone) {
+            const now = new Date(new Date().toLocaleString('en-US', { timeZone: timezone }));
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            // Opcional: si quieres segundos, descomenta la siguiente línea y ajústala abajo
+            // const seconds = String(now.getSeconds()).padStart(2, '0');
+            
+            document.getElementById(timeElementId).textContent = `${hours}:${minutes}`;
+        }
+
+        function initializeClocks() {
+            updateClock('tokio-time', 'Asia/Tokyo');
+            updateClock('london-time', 'Europe/London');
+            updateClock('ny-time', 'America/New_York');
+        }
+
+        setInterval(initializeClocks, 1000);
+        initializeClocks();
+    </script>
+
+</body>
+</html>
