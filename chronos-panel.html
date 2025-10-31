@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chronos Panel</title>
+    <title>Obsidian Deck</title>
     <style>
-        /* --- FUENTES DE NUESTRA MARCA (Añadimos Orbitron) --- */
-        @import url('https://fonts.googleapis.com/css2?family=Lora:wght@500&family=Orbitron:wght@500&display=swap');
+        /* --- FUENTES DE NUESTRA MARCA --- */
+        @import url('https://fonts.googleapis.com/css2?family=Lora:wght@500&family=Roboto+Mono:wght@300;400&display=swap');
 
         /* --- ESTILO GENERAL --- */
         body {
@@ -20,81 +20,103 @@
             height: 100vh;
         }
 
-        /* --- EL CHASIS PRINCIPAL DEL PANEL --- */
-        .chronos-panel {
+        /* --- EL CHASIS PRINCIPAL --- */
+        .obsidian-deck {
             display: flex;
             justify-content: space-around;
-            align-items: center;
+            align-items: stretch; /* Asegura que todos los módulos tengan la misma altura */
             width: 100%;
-            max-width: 1200px; /* Limita el ancho para mantener proporciones */
-            padding: 20px;
-            background-color: #0A0A0A; /* Un negro ligeramente menos profundo que el fondo */
-            border: 1px solid #222; /* Borde sutil para definir el hardware */
-            border-radius: 8px; /* Bordes suavemente redondeados */
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5); /* Sombra para darle profundidad */
+            max-width: 1200px;
+            padding: 25px 20px;
+            background-color: rgba(10, 10, 10, 0.5); /* Fondo negro semitransparente */
+            border: 1px solid #222;
+            border-radius: 12px; /* Bordes un poco más pronunciados */
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
         }
 
         /* --- CADA MÓDULO DE RELOJ INDIVIDUAL --- */
         .clock-module {
             text-align: center;
-            flex-grow: 1; /* Permite que cada módulo ocupe el espacio disponible */
+            flex-grow: 1;
             padding: 0 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
         /* --- ESTILO DEL NOMBRE DE LA UBICACIÓN --- */
         .location-name {
-            font-family: 'Lora', serif; /* Nuestra fuente de Prestigio */
-            font-size: 1.2em;
-            letter-spacing: 3px;
+            font-family: 'Lora', serif;
+            font-size: 1.1em;
+            letter-spacing: 2.5px;
             text-transform: uppercase;
-            color: #F1F1F1; /* Blanco Hueso para máxima legibilidad */
-            opacity: 0.8;
-            margin-bottom: 15px;
+            color: #AA8A5A; /* Oro Cepillado para el título */
+            margin-bottom: 20px;
+            opacity: 0.9;
         }
 
-        /* --- ESTILO DE LA HORA DIGITAL ILUMINADA --- */
-        .digital-time {
-            font-family: 'Orbitron', sans-serif; /* La nueva fuente digital */
-            font-size: 3.5em; /* Grande e imponente */
-            color: #AA8A5A; /* Nuestro Oro Cepillado */
-            /* El efecto de brillo LED */
-            text-shadow: 0 0 5px rgba(170, 138, 90, 0.7), 
-                         0 0 10px rgba(170, 138, 90, 0.5);
+        /* --- ESTILO DE LA HORA (REFINADO) --- */
+        .time {
+            font-family: 'Roboto Mono', monospace; /* <-- CAMBIO CLAVE: Volvemos a la elegancia */
+            font-size: 2.5em; /* <-- CAMBIO CLAVE: Tamaño reducido y profesional */
+            font-weight: 400; /* Un poco más de peso para claridad */
+            color: #EAEAEA; /* Un blanco ligeramente menos brillante */
+            /* <-- CAMBIO CLAVE: Efecto de brillo sutil, no un neón */
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.1);
+            line-height: 1; /* Ajusta el espaciado vertical */
         }
+        
+        /* --- ESTILO DE LA FECHA (REINTRODUCIDA) --- */
+        .date {
+            font-family: 'Roboto Mono', monospace;
+            font-weight: 300;
+            font-size: 0.9em;
+            color: #F1F1F1;
+            opacity: 0.5; /* Muy sutil para no competir con la hora */
+            margin-top: 15px;
+        }
+
     </style>
 </head>
 <body>
 
-    <div class="chronos-panel">
+    <div class="obsidian-deck">
         <div class="clock-module">
             <div class="location-name">Tokio</div>
-            <div id="tokio-time" class="digital-time"></div>
+            <div id="tokio-time" class="time"></div>
+            <div id="tokio-date" class="date"></div>
         </div>
         <div class="clock-module">
             <div class="location-name">London</div>
-            <div id="london-time" class="digital-time"></div>
+            <div id="london-time" class="time"></div>
+            <div id="london-date" class="date"></div>
         </div>
         <div class="clock-module">
             <div class="location-name">New York</div>
-            <div id="ny-time" class="digital-time"></div>
+            <div id="ny-time" class="time"></div>
+            <div id="ny-date" class="date"></div>
         </div>
     </div>
 
     <script>
-        function updateClock(timeElementId, timezone) {
+        function updateClock(timeElementId, dateElementId, timezone) {
             const now = new Date(new Date().toLocaleString('en-US', { timeZone: timezone }));
             const hours = String(now.getHours()).padStart(2, '0');
             const minutes = String(now.getMinutes()).padStart(2, '0');
-            // Opcional: si quieres segundos, descomenta la siguiente línea y ajústala abajo
-            // const seconds = String(now.getSeconds()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0'); // Volvemos a añadir segundos
             
-            document.getElementById(timeElementId).textContent = `${hours}:${minutes}`;
+            const day = now.toLocaleDateString('en-US', { weekday: 'short' });
+            const month = now.toLocaleDateString('en-US', { month: 'short' });
+            const dayNum = now.getDate();
+
+            document.getElementById(timeElementId).textContent = `${hours}:${minutes}:${seconds}`;
+            document.getElementById(dateElementId).textContent = `${day}, ${month} ${dayNum}`;
         }
 
         function initializeClocks() {
-            updateClock('tokio-time', 'Asia/Tokyo');
-            updateClock('london-time', 'Europe/London');
-            updateClock('ny-time', 'America/New_York');
+            updateClock('tokio-time', 'tokio-date', 'Asia/Tokyo');
+            updateClock('london-time', 'london-date', 'Europe/London');
+            updateClock('ny-time', 'ny-date', 'America/New_York');
         }
 
         setInterval(initializeClocks, 1000);
