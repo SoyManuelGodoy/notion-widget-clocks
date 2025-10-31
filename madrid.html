@@ -1,0 +1,53 @@
+<!-- Contenido completo de london.html -->
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300&display=swap'); /* Cambiado a Roboto Mono para un look más "terminal" */
+    body {
+        background-color: transparent;
+        color: #F1F1F1;
+        font-family: 'Roboto Mono', monospace;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        text-align: center;
+        overflow: hidden; /* Evita barras de scroll */
+    }
+    .container {
+        transform: scale(0.8); /* Reduce el tamaño general si es muy grande en Notion */
+    }
+    .time {
+        font-size: 2.5em; /* Ajustado el tamaño */
+        font-weight: 300;
+        letter-spacing: 2px;
+    }
+    .date {
+        font-size: 1em; /* Ajustado el tamaño */
+        opacity: 0.7;
+    }
+</style>
+
+<div class="container">
+    <div id="time" class="time"></div>
+    <div id="date" class="date"></div>
+</div>
+
+<script>
+    function updateClock() {
+        const timezone = 'Europe/Madrid'; // Zona horaria para este archivo
+        
+        const now = new Date(new Date().toLocaleString('en-US', { timeZone: timezone }));
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        
+        const day = now.toLocaleDateString('en-US', { weekday: 'short' });
+        const month = now.toLocaleDateString('en-US', { month: 'short' });
+        const dayNum = now.getDate();
+
+        document.getElementById('time').textContent = `${hours}:${minutes}:${seconds}`;
+        document.getElementById('date').textContent = `${day}, ${month} ${dayNum}`;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+</script>
