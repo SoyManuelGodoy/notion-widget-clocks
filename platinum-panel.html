@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Platinum Standard</title>
+    <style>
+        /* --- FUENTES DE NUESTRA MARCA (Las mismas, son perfectas) --- */
+        @import url('https://fonts.googleapis.com/css2?family=Lora:wght@500&family=Roboto+Mono:wght@400&display=swap');
+
+        /* --- ESTILO GENERAL --- */
+        body {
+            background-color: transparent;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        /* --- EL CHASIS "PLATINUM DECK" --- */
+        .platinum-deck {
+            display: flex;
+            justify-content: space-around;
+            align-items: stretch;
+            width: 100%;
+            max-width: 1200px;
+            padding: 25px 20px;
+            
+            /* <-- CAMBIO CLAVE: Textura de metal cepillado oscuro */
+            background: linear-gradient(to right, #1a1a1a, #2b2b2b, #1a1a1a);
+            
+            border: 1px solid #444; /* Borde de metal más definido */
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.05); /* Sombra interior para efecto 3D */
+        }
+
+        /* --- CADA MÓDULO DE RELOJ INDIVIDUAL --- */
+        .clock-module {
+            text-align: center;
+            flex-grow: 1;
+            padding: 0 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* --- ESTILO DEL NOMBRE DE LA UBICACIÓN (Ahora en Platino) --- */
+        .location-name {
+            font-family: 'Lora', serif;
+            font-size: 1.1em;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            
+            /* <-- CAMBIO CLAVE: Color Platino */
+            color: #E5E4E2; 
+            
+            margin-bottom: 20px;
+            opacity: 0.8;
+        }
+
+        /* --- ESTILO DE LA HORA (Ahora en Cian Glacial) --- */
+        .time {
+            font-family: 'Roboto Mono', monospace;
+            font-size: 2.5em;
+            font-weight: 400;
+
+            /* <-- CAMBIO CLAVE: Color Cian Glacial para los datos */
+            color: #7DF9FF; 
+            
+            /* <-- Brillo a juego con el nuevo color */
+            text-shadow: 0 0 8px rgba(125, 249, 255, 0.4);
+            line-height: 1;
+        }
+        
+        /* --- ESTILO DE LA FECHA (En Platino, sutil) --- */
+        .date {
+            font-family: 'Roboto Mono', monospace;
+            font-weight: 400;
+            font-size: 0.9em;
+            
+            /* <-- En color Platino para consistencia */
+            color: #E5E4E2;
+            
+            opacity: 0.5;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="platinum-deck">
+        <!-- El HTML es idéntico, solo cambiamos el CSS -->
+        <div class="clock-module">
+            <div class="location-name">Tokio</div>
+            <div id="tokio-time" class="time"></div>
+            <div id="tokio-date" class="date"></div>
+        </div>
+        <div class="clock-module">
+            <div class="location-name">London</div>
+            <div id="london-time" class="time"></div>
+            <div id="london-date" class="date"></div>
+        </div>
+        <div class="clock-module">
+            <div class="location-name">New York</div>
+            <div id="ny-time" class="time"></div>
+            <div id="ny-date" class="date"></div>
+        </div>
+    </div>
+
+    <script>
+        // El JavaScript no necesita cambios.
+        function updateClock(timeElementId, dateElementId, timezone) {
+            const now = new Date(new Date().toLocaleString('en-US', { timeZone: timezone }));
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const day = now.toLocaleDateString('en-US', { weekday: 'short' });
+            const month = now.toLocaleDateString('en-US', { month: 'short' });
+            const dayNum = now.getDate();
+            document.getElementById(timeElementId).textContent = `${hours}:${minutes}:${seconds}`;
+            document.getElementById(dateElementId).textContent = `${day}, ${month} ${dayNum}`;
+        }
+        function initializeClocks() {
+            updateClock('tokio-time', 'tokio-date', 'Asia/Tokyo');
+            updateClock('london-time', 'london-date', 'Europe/London');
+            updateClock('ny-time', 'ny-date', 'America/New_York');
+        }
+        setInterval(initializeClocks, 1000);
+        initializeClocks();
+    </script>
+
+</body>
+</html>
