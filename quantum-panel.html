@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum Panel</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+        body {
+            background-color: transparent;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .quantum-panel {
+            display: flex;
+            justify-content: space-around;
+            align-items: stretch;
+            width: 100%;
+            max-width: 1200px;
+            padding: 25px 20px;
+            background-color: #0A0E1A; /* Azul Abisal */
+            /* Efecto de scanlines */
+            background-image: linear-gradient(rgba(0, 255, 255, 0.07) 1px, transparent 1px);
+            background-size: 100% 3px;
+            border: 1px solid #00FFFF; /* Borde Cian Eléctrico */
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3), inset 0 0 15px rgba(0, 255, 255, 0.1); /* Brillo interior y exterior */
+        }
+
+        .clock-module {
+            text-align: center;
+            flex-grow: 1;
+            padding: 0 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .location-name {
+            font-family: 'IBM Plex Mono', monospace; /* <-- Tipografía Tech */
+            font-size: 1.1em;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #00FFFF; /* <-- Cian Eléctrico */
+            margin-bottom: 20px;
+            text-shadow: 0 0 5px #00FFFF;
+        }
+
+        .time {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 2.5em;
+            font-weight: 500;
+            color: #E01A8A; /* <-- Magenta Neón */
+            line-height: 1;
+            text-shadow: 0 0 8px rgba(224, 26, 138, 0.7);
+        }
+        
+        .date {
+            font-family: 'IBM Plex Mono', monospace;
+            font-weight: 400;
+            font-size: 0.9em;
+            color: #00FFFF;
+            opacity: 0.6;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="quantum-panel">
+        <!-- El resto del HTML (divs y script) es idéntico al de Obsidian Deck -->
+        <div class="clock-module">
+            <div class="location-name">Tokio</div>
+            <div id="tokio-time" class="time"></div>
+            <div id="tokio-date" class="date"></div>
+        </div>
+        <div class="clock-module">
+            <div class="location-name">London</div>
+            <div id="london-time" class="time"></div>
+            <div id="london-date" class="date"></div>
+        </div>
+        <div class="clock-module">
+            <div class="location-name">New York</div>
+            <div id="ny-time" class="time"></div>
+            <div id="ny-date" class="date"></div>
+        </div>
+    </div>
+    <script>
+        function updateClock(timeElementId, dateElementId, timezone) {
+            const now = new Date(new Date().toLocaleString('en-US', { timeZone: timezone }));
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const day = now.toLocaleDateString('en-US', { weekday: 'short' });
+            const month = now.toLocaleDateString('en-US', { month: 'short' });
+            const dayNum = now.getDate();
+            document.getElementById(timeElementId).textContent = `${hours}:${minutes}:${seconds}`;
+            document.getElementById(dateElementId).textContent = `${day}, ${month} ${dayNum}`;
+        }
+        function initializeClocks() {
+            updateClock('tokio-time', 'tokio-date', 'Asia/Tokyo');
+            updateClock('london-time', 'london-date', 'Europe/London');
+            updateClock('ny-time', 'ny-date', 'America/New_York');
+        }
+        setInterval(initializeClocks, 1000);
+        initializeClocks();
+    </script>
+</body>
+</html>
