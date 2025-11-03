@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Sessions Matrix</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Lora:wght@500&family=Roboto+Mono:wght@400;500&display=swap');
+
+        body {
+            background-color: transparent;
+            margin: 0;
+            font-family: 'Roboto Mono', monospace;
+            color: #EAEAEA;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .matrix-container {
+            width: 100%;
+            height: 100%;
+            max-width: 1200px;
+            padding: 25px 40px;
+            box-sizing: border-box;
+            background-color: rgba(10, 10, 10, 0.5);
+            border: 1px solid #282828;
+            border-radius: 14px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* --- Título del Panel --- */
+        .panel-title {
+            font-family: 'Lora', serif;
+            font-size: 1.2em;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: #AA8A5A; /* Oro Cepillado */
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #282828;
+        }
+
+        /* --- ÁREA DE LA LÍNEA DE TIEMPO --- */
+        .timeline-area {
+            position: relative;
+            width: 100%;
+            flex-grow: 1; /* Ocupa el espacio restante */
+            /* Fondo con grid vertical sutil */
+            background-image: linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+            background-size: 4.1666% 100%; /* 100 / 24 horas = 4.1666% */
+        }
+
+        .sessions-bars {
+            position: relative;
+            height: 100%;
+            padding: 20px 0;
+        }
+
+        .session-bar {
+            position: absolute;
+            height: 30px;
+            background-color: #333; /* Gris Grafito */
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            padding-left: 10px;
+            box-sizing: border-box;
+            font-family: 'Lora', serif;
+            font-size: 0.8em;
+            color: #EAEAEA;
+            opacity: 0.8;
+            overflow: hidden;
+        }
+
+        /* --- Estilo para los solapamientos --- */
+        .overlap {
+            background-color: #E5E4E2; /* Platino */
+            color: #111; /* Texto oscuro para contraste */
+            font-weight: bold;
+            opacity: 1;
+            z-index: 10;
+        }
+
+        .current-time-indicator {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            width: 2px;
+            background-color: #AA8A5A; /* Oro Cepillado */
+            box-shadow: 0 0 10px #AA8A5A;
+            z-index: 20;
+        }
+        .current-time-label {
+            position: absolute;
+            top: -25px;
+            transform: translateX(-50%);
+            font-size: 0.9em;
+            font-weight: 500;
+            color: #AA8A5A;
+            background-color: rgba(10, 10, 10, 0.8);
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+        
+        .time-scale {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            position: absolute;
+            bottom: 0;
+            font-size: 0.7em;
+            opacity: 0.5;
+            padding: 0 5px;
+            box-sizing: border-box;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="matrix-container">
+        <div class="panel-title">Global Sessions</div>
+        <div class="timeline-area">
+            <div class="sessions-bars"></div>
+            <div class="current-time-indicator">
+                <div class="current-time-label"></div>
+            </div>
+            <div class="time-scale"></div>
+        </div>
+    </div>
+
+    <script>
+        const sessions = [
+            { name: 'Sydney', timezone: 'Australia/Sydney', start: 8, end: 17, top: 120 },
+            { name: 'Tokyo', timezone: 'Asia/Tokyo', start: 9, end: 18, top: 160 },
+            { name: 'London', timezone: 'Europe/London', start: 8, end: 17, top: 40 },
+            { name: 'New York', timezone: 'America/New_York', start: 8, end: 17, top: 80 }
+        ];
+
+        function getUTCDateTimeForSession(timezone, hour, forToday) {
+            const nowInZone = new Date(new Date().toLocaleString('en-US', { timeZone: timezone }));
+            const date = new Date(nowInZone);
+            if (!forToday) {
+                date.setDate(date.getDate() - 1); // Empezamos desde ayer
+            }
+            date.setHours(hour, 0, 0, 0);
+            return date;
+        }
+
+        function updateTimeline() {
+            const container = document.querySelector('.timeline-area');
+            const sessionsBarsContainer = document.querySelector('.sessions-bars');
+            const timeScaleContainer = document.querySelector('.time-scale');
+            const indicator = document.querySelector('.current-time-indicator');
+            const indicatorLabel = document.querySelector('.current-time-label');
+
+            sessionsBarsContainer.innerHTML = ''; // Limpiar barras
+
+            const now = new Date();
+            const timelineStart = new Date(now);
+            timelineStart.setHours(now.getHours() - 12);
+            const timelineEnd = new Date(now);
+            timelineEnd.setHours(now.getHours() + 12);
+            const timelineDuration = timelineEnd - timelineStart;
+
+            const allIntervals = [];
+
+            [true, false].forEach(isToday => {
+                sessions.forEach(session => {
+                    const start = getUTCDateTimeForSession(session.timezone, session.start, isToday);
+                    const end = getUTCDateTimeForSession(session.timezone, session.end, isToday);
+
+                    const left = ((start - timelineStart) / timelineDuration) * 100;
+                    const width = ((end - start) / timelineDuration) * 100;
+
+                    if (left < 100 && (left + width) > 0) {
+                        const bar = document.createElement('div');
+                        bar.className = 'session-bar';
+                        bar.style.left = `${left}%`;
+                        bar.style.width = `${width}%`;
+                        bar.style.top = `${session.top}px`;
+                        bar.textContent = session.name;
+                        sessionsBarsContainer.appendChild(bar);
+                        allIntervals.push({ start, end, bar });
+                    }
+                });
+            });
+
+            // Detectar y estilizar solapamientos
+            for (let i = 0; i < allIntervals.length; i++) {
+                for (let j = i + 1; j < allIntervals.length; j++) {
+                    const a = allIntervals[i];
+                    const b = allIntervals[j];
+                    const overlapStart = Math.max(a.start, b.start);
+                    const overlapEnd = Math.min(a.end, b.end);
+
+                    if (overlapStart < overlapEnd) {
+                        const overlapLeft = ((overlapStart - timelineStart) / timelineDuration) * 100;
+                        const overlapWidth = ((overlapEnd - overlapStart) / timelineDuration) * 100;
+
+                        const overlapBar = document.createElement('div');
+                        overlapBar.className = 'session-bar overlap';
+                        overlapBar.style.left = `${overlapLeft}%`;
+                        overlapBar.style.width = `${overlapWidth}%`;
+                        overlapBar.style.top = a.bar.style.top;
+                        sessionsBarsContainer.appendChild(overlapBar);
+
+                        const overlapBarB = document.createElement('div');
+                        overlapBarB.className = 'session-bar overlap';
+                        overlapBarB.style.left = `${overlapLeft}%`;
+                        overlapBarB.style.width = `${overlapWidth}%`;
+                        overlapBarB.style.top = b.bar.style.top;
+                        sessionsBarsContainer.appendChild(overlapBarB);
+                    }
+                }
+            }
+
+            const indicatorPosition = ((now - timelineStart) / timelineDuration) * 100;
+            indicator.style.left = `${indicatorPosition}%`;
+            indicatorLabel.textContent = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+            indicatorLabel.style.left = `${indicatorPosition}%`;
+            
+            timeScaleContainer.innerHTML = '';
+            for (let i = -12; i <= 12; i++) {
+                const hour = (now.getHours() + i + 24) % 24;
+                if (i % 2 === 0) { // Mostrar una marca cada 2 horas
+                    const markerDate = new Date(now);
+                    markerDate.setHours(now.getHours() + i, 0, 0, 0);
+                    const position = ((markerDate - timelineStart) / timelineDuration) * 100;
+                    if(position >= 0 && position <= 100){
+                        const scaleElement = document.createElement('span');
+                        scaleElement.style.position = 'absolute';
+                        scaleElement.style.left = `${position}%`;
+                        scaleElement.style.transform = 'translateX(-50%)';
+                        scaleElement.textContent = String(hour).padStart(2, '0') + ':00';
+                        timeScaleContainer.appendChild(scaleElement);
+                    }
+                }
+            }
+        }
+
+        setInterval(updateTimeline, 60000);
+        updateTimeline();
+    </script>
+</body>
+</html>
