@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Global Sessions Gantt</title>
+    <title>Dynamic Sessions Timeline</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Lora:wght@500&family=Roboto+Mono:wght@400;500&display=swap');
 
@@ -13,7 +13,7 @@
             align-items: center; height: 100vh;
         }
 
-        .gantt-container {
+        .matrix-container {
             width: 100%; height: 100%; max-width: 1200px; padding: 25px 40px;
             box-sizing: border-box; background-color: rgba(10, 10, 10, 0.7);
             border: 1px solid #282828; border-radius: 14px;
@@ -34,7 +34,7 @@
         .sessions-grid {
             position: relative; height: 80%;
             background-image: linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-            background-size: calc(100% / 24) 100%; /* Una línea por cada hora */
+            background-size: calc(100% / 24) 100%;
         }
 
         .session-bar {
@@ -49,29 +49,29 @@
         }
 
         .current-time-indicator {
-            position: absolute; top: 0; height: 80%; width: 2px;
+            position: absolute; left: 50%; /* Siempre en el centro */
+            top: 0; height: 80%; width: 2px;
             background-color: #AA8A5A; box-shadow: 0 0 10px #AA8A5A; z-index: 20;
         }
 
         .current-time-label {
-            position: absolute; top: -25px; transform: translateX(-50%); font-size: 0.9em;
-            font-weight: 500; color: #AA8A5A; background-color: rgba(10, 10, 10, 0.8);
-            padding: 2px 6px; border-radius: 3px;
+            position: absolute; left: 50%; top: -25px; transform: translateX(-50%);
+            font-size: 0.9em; font-weight: 500; color: #AA8A5A;
+            background-color: rgba(10, 10, 10, 0.8); padding: 2px 6px; border-radius: 3px;
         }
         
         .time-scale {
             position: absolute; bottom: 0; width: 100%; height: 20%;
             display: flex; justify-content: space-between;
         }
-
         .time-scale-label {
             font-size: 0.7em; opacity: 0.5; text-align: center;
-            flex-basis: calc(100% / 12); /* 12 etiquetas para 24 horas (cada 2 horas) */
+            position: absolute; transform: translateX(-50%);
         }
     </style>
 </head>
 <body>
-    <div class="gantt-container">
+    <div class="matrix-container">
         <div class="panel-title">Global Sessions</div>
         <div class="timeline-area">
             <div class="sessions-grid"></div>
@@ -88,113 +88,111 @@
             { name: 'New York', timezone: 'America/New_York', start: 8, end: 17, top: 130 }
         ];
 
-        function getUTCHour(timezone, localHour) {
-            const now = new Date();
-            const dateStr = now.toLocaleDateString('en-CA', {timeZone: timezone}); // YYYY-MM-DD
-            const timeStr = String(localHour).padStart(2, '0') + ':00:00';
-            const dateTimeStr = `${dateStr}T${timeStr}`;
-            
-            // Crear fecha en la zona horaria de la sesión, luego obtener la hora UTC
-            const localDate = new Date(dateTimeStr);
-            const tzOffset = new Date().toLocaleString("en-US", {timeZone: timezone, timeZoneName: "short"}).split('GMT')[1];
-            const offsetHours = parseInt(tzOffset.slice(0,3));
-            
-            // Esto es una simplificación, pero más robusta para este caso
-            const tempDate = new Date(`2000-01-01T${timeStr}${tzOffset}`);
-            return tempDate.getUTCHours();
+        // Función robusta para obtener instancias de sesión (hoy y ayer)
+        function getSessionInstances(session, referenceDate) {
+            const instances = [];
+            [-1, 0].forEach(dayOffset => {
+                // Obtener la fecha correcta en la zona horaria de la sesión
+                const dateInZone = new Date(referenceDate);
+                dateInZone.setDate(dateInZone.getDate() + dayOffset);
+                const year = dateInZone.toLocaleString('en-US', { timeZone: session.timezone, year: 'numeric' });
+                const month = dateInZone.toLocaleString('en-US', { timeZone: session.timezone, month: '2-digit' });
+                const day = dateInZone.toLocaleString('en-US', { timeZone: session.timezone, day: '2-digit' });
+
+                const startDate = new Date(`${year}-${month}-${day}T${String(session.start).padStart(2, '0')}:00:00`);
+                const endDate = new Date(`${year}-${month}-${day}T${String(session.end).padStart(2, '0')}:00:00`);
+
+                // Convertir de vuelta a la hora local del navegador para obtener el timestamp correcto
+                const startStr = startDate.toLocaleString('en-US', { timeZone: session.timezone });
+                const endStr = endDate.toLocaleString('en-US', { timeZone: session.timezone });
+                
+                instances.push({
+                    start: new Date(startStr),
+                    end: new Date(endStr),
+                    top: session.top,
+                    name: session.name
+                });
+            });
+            return instances;
         }
 
         function drawTimeline() {
             const gridContainer = document.querySelector('.sessions-grid');
             const timeScaleContainer = document.querySelector('.time-scale');
-            const indicator = document.querySelector('.current-time-indicator');
             const indicatorLabel = document.querySelector('.current-time-label');
 
-            gridContainer.innerHTML = '';
-            
-            const allIntervals = [];
+            gridContainer.innerHTML = ''; // Limpiar
+
+            const now = new Date();
+            const timelineStart = new Date(now.getTime() - 12 * 60 * 60 * 1000); // 12 horas antes
+            const timelineEnd = new Date(now.getTime() + 12 * 60 * 60 * 1000); // 12 horas después
+            const timelineDuration = timelineEnd - timelineStart;
+
+            const visibleIntervals = [];
 
             sessions.forEach(session => {
-                const startUTC = getUTCHour(session.timezone, session.start);
-                let endUTC = getUTCHour(session.timezone, session.end);
-                
-                // Si la sesión cruza la medianoche UTC
-                if (endUTC < startUTC) {
-                    // Barra hasta la medianoche
-                    let left1 = (startUTC / 24) * 100;
-                    let width1 = ((24 - startUTC) / 24) * 100;
-                    allIntervals.push({start: startUTC, end: 24, top: session.top, name: session.name});
-                    
-                    // Barra desde la medianoche
-                    let left2 = 0;
-                    let width2 = (endUTC / 24) * 100;
-                    allIntervals.push({start: 0, end: endUTC, top: session.top, name: session.name});
+                getSessionInstances(session, now).forEach(instance => {
+                    // Solo dibujar si la instancia está dentro de nuestra ventana de 24h
+                    if (instance.start < timelineEnd && instance.end > timelineStart) {
+                        const left = ((instance.start - timelineStart) / timelineDuration) * 100;
+                        const width = ((instance.end - instance.start) / timelineDuration) * 100;
 
-                } else {
-                    let left = (startUTC / 24) * 100;
-                    let width = ((endUTC - startUTC) / 24) * 100;
-                    allIntervals.push({start: startUTC, end: endUTC, top: session.top, name: session.name});
-                }
+                        const bar = document.createElement('div');
+                        bar.className = 'session-bar';
+                        bar.style.left = `${left}%`;
+                        bar.style.width = `${width}%`;
+                        bar.style.top = `${instance.top}px`;
+                        bar.textContent = instance.name;
+                        gridContainer.appendChild(bar);
+                        visibleIntervals.push({ ...instance, bar });
+                    }
+                });
             });
 
-            // Dibujar barras principales
-            allIntervals.forEach(interval => {
-                const bar = document.createElement('div');
-                bar.className = 'session-bar';
-                bar.style.left = `${(interval.start / 24) * 100}%`;
-                bar.style.width = `${((interval.end - interval.start) / 24) * 100}%`;
-                bar.style.top = `${interval.top}px`;
-                bar.textContent = interval.name;
-                gridContainer.appendChild(bar);
-            });
-            
             // Detectar y dibujar solapamientos
-            for (let i = 0; i < allIntervals.length; i++) {
-                for (let j = i + 1; j < allIntervals.length; j++) {
-                    const a = allIntervals[i];
-                    const b = allIntervals[j];
+            for (let i = 0; i < visibleIntervals.length; i++) {
+                for (let j = i + 1; j < visibleIntervals.length; j++) {
+                    const a = visibleIntervals[i];
+                    const b = visibleIntervals[j];
                     const overlapStart = Math.max(a.start, b.start);
                     const overlapEnd = Math.min(a.end, b.end);
 
                     if (overlapStart < overlapEnd) {
-                        const overlapBar = document.createElement('div');
-                        overlapBar.className = 'session-bar overlap';
-                        overlapBar.style.left = `${(overlapStart / 24) * 100}%`;
-                        overlapBar.style.width = `${((overlapEnd - overlapStart) / 24) * 100}%`;
-                        overlapBar.style.top = `${a.top}px`;
-                        gridContainer.appendChild(overlapBar);
-
-                        const overlapBarB = document.createElement('div');
-                        overlapBarB.className = 'session-bar overlap';
-                        overlapBarB.style.left = `${(overlapStart / 24) * 100}%`;
-                        overlapBarB.style.width = `${((overlapEnd - overlapStart) / 24) * 100}%`;
-                        overlapBarB.style.top = `${b.top}px`;
-                        gridContainer.appendChild(overlapBarB);
+                        const left = ((overlapStart - timelineStart) / timelineDuration) * 100;
+                        const width = ((overlapEnd - overlapStart) / timelineDuration) * 100;
+                        
+                        [a, b].forEach(interval => {
+                             const overlapBar = document.createElement('div');
+                             overlapBar.className = 'session-bar overlap';
+                             overlapBar.style.left = `${left}%`;
+                             overlapBar.style.width = `${width}%`;
+                             overlapBar.style.top = `${interval.top}px`;
+                             gridContainer.appendChild(overlapBar);
+                        });
                     }
                 }
             }
-
-            // Actualizar indicador de tiempo actual
-            const nowUTC = new Date();
-            const currentUTCHour = nowUTC.getUTCHours() + (nowUTC.getUTCMinutes() / 60);
-            const indicatorPosition = (currentUTCHour / 24) * 100;
-            indicator.style.left = `${indicatorPosition}%`;
-            indicatorLabel.textContent = nowUTC.toLocaleTimeString('en-GB', { timeZone: 'UTC', hour: '2-digit', minute: '2-digit' }) + ' UTC';
-            indicatorLabel.style.left = `${indicatorPosition}%`;
+            
+            indicatorLabel.textContent = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
             // Dibujar escala de tiempo
             timeScaleContainer.innerHTML = '';
-            for (let i = 0; i < 24; i += 2) {
-                const label = document.createElement('div');
-                label.className = 'time-scale-label';
-                label.textContent = String(i).padStart(2, '0') + ':00';
-                timeScaleContainer.appendChild(label);
+            for (let h = -12; h <= 12; h++) {
+                if (h % 2 === 0) { // Marca cada 2 horas
+                    const labelDate = new Date(now.getTime() + h * 60 * 60 * 1000);
+                    const position = ((labelDate - timelineStart) / timelineDuration) * 100;
+                    
+                    const label = document.createElement('div');
+                    label.className = 'time-scale-label';
+                    label.style.left = `${position}%`;
+                    label.textContent = labelDate.toLocaleTimeString('en-GB', { hour: '2-digit'}) + ':00';
+                    timeScaleContainer.appendChild(label);
+                }
             }
         }
         
         drawTimeline();
-        setInterval(drawTimeline, 60000); // Actualiza cada minuto
-
+        setInterval(drawTimeline, 60000);
     </script>
 </body>
 </html>
